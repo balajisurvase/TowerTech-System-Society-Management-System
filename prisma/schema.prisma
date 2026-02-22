@@ -1,0 +1,109 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Society {
+  id      String  @id @default(uuid())
+  name    String
+  address String
+  towers  Tower[]
+}
+
+model Tower {
+  id         String   @id @default(uuid())
+  name       String
+  societyId  String
+  society    Society  @relation(fields: [societyId], references: [id])
+  flats      Flat[]
+  notices    Notice[]
+}
+
+model Flat {
+  id          String    @id @default(uuid())
+  towerId     String
+  tower       Tower     @relation(fields: [towerId], references: [id])
+  floorNumber Int
+  flatNumber  String
+  resident    User?
+  visitors    Visitor[]
+}
+
+model User {
+  id               String            @id @default(uuid())
+  flatId           String?           @unique
+  flat             Flat?             @relation(fields: [flatId], references: [id])
+  fullName         String
+  email            String            @unique
+  phone            String
+  passwordHash     String
+  role             String            @default("RESIDENT") // ADMIN, RESIDENT, SECURITY
+  maintenanceBills MaintenanceBill[]
+  complaints       Complaint[]
+  bookings         Booking[]
+}
+
+model MaintenanceBill {
+  id         String    @id @default(uuid())
+  residentId String
+  resident   User      @relation(fields: [residentId], references: [id])
+  month      String
+  year       Int
+  amount     Float
+  status     String    @default("UNPAID") // PAID, UNPAID
+  payments   Payment[]
+}
+
+model Payment {
+  id            String          @id @default(uuid())
+  billId        String
+  bill          MaintenanceBill @relation(fields: [billId], references: [id])
+  paymentDate   DateTime        @default(now())
+  paymentMode   String
+  transactionId String          @unique
+}
+
+model Complaint {
+  id          String   @id @default(uuid())
+  residentId  String
+  resident    Resident @relation(fields: [residentId], references: [id])
+  title       String
+  description String
+  status      String   @default("PENDING") // PENDING, IN_PROGRESS, RESOLVED
+  createdAt   DateTime @default(now())
+}
+
+model Notice {
+  id          String   @id @default(uuid())
+  towerId     String?
+  tower       Tower?   @relation(fields: [towerId], references: [id])
+  title       String
+  description String
+  createdAt   DateTime @default(now())
+}
+
+model Booking {
+  id          String   @id @default(uuid())
+  residentId  String
+  resident    Resident @relation(fields: [residentId], references: [id])
+  amenityType String
+  bookingDate DateTime
+  status      String   @default("PENDING") // PENDING, APPROVED, REJECTED
+}
+
+model Visitor {
+  id          String    @id @default(uuid())
+  flatId      String
+  flat        Flat      @relation(fields: [flatId], references: [id])
+  visitorName String
+  phone       String
+  entryTime   DateTime  @default(now())
+  exitTime    DateTime?
+}
