@@ -10,6 +10,7 @@ import AdminDashboard from './components/AdminDashboard';
 import ResidentDashboard from './components/ResidentDashboard';
 import { Toaster } from 'sonner';
 import { Users } from 'lucide-react';
+import { SpeedInsights } from '@vercel/speed-insights/react';
 
 export default function App() {
   const [user, setUser] = useState<User | null>(null);
@@ -128,6 +129,7 @@ export default function App() {
   return (
     <div className="flex min-h-screen bg-[#F8FAFC] font-sans text-slate-900">
       <Toaster position="top-center" richColors />
+      <SpeedInsights />
       {!isSupabaseConfigured && (
         <div className="fixed top-0 left-0 right-0 bg-blue-600 text-white px-4 py-2 text-[10px] z-[9999] shadow-lg flex items-center justify-between font-black uppercase tracking-widest">
           <div className="flex items-center gap-2">
