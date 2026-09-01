@@ -1,6 +1,7 @@
 import { supabase } from './supabase';
+import { api } from './api';
 import { Resident, MaintenanceRecord, Complaint, Booking, Society, Admin, Amenity, Media } from '../types';
-import { initialAmenities } from '../data';
+import { initialResidents, initialMaintenance, initialComplaints, initialBookings, initialAmenities } from '../data';
 
 // Helper to generate a UUID if needed
 const generateUUID = () => {
@@ -16,19 +17,23 @@ const generateUUID = () => {
 
 export const societyService = {
   async getResidents() {
-    const { data, error } = await supabase
-      .from('resident')
-      .select('*')
-      .order('resident_id', { ascending: true });
-    
-    if (error) {
-      if (error.code === '42P01' || error.code === 'PGRST205') {
-        return [] as Resident[];
+    try {
+      const { data, error } = await supabase
+        .from('resident')
+        .select('*')
+        .order('resident_id', { ascending: true });
+      
+      if (error) {
+        return await api.residents.list();
       }
-      console.error('Error fetching residents:', error);
-      throw error;
+      return (data && data.length > 0) ? data as Resident[] : await api.residents.list();
+    } catch (err) {
+      try {
+        return await api.residents.list();
+      } catch {
+        return initialResidents;
+      }
     }
-    return data as Resident[];
   },
 
   async getResidentByEmail(email: string) {
@@ -136,19 +141,23 @@ export const societyService = {
   },
 
   async getMaintenance() {
-    const { data, error } = await supabase
-      .from('maintenance')
-      .select('*')
-      .order('due_date', { ascending: false });
-    
-    if (error) {
-      if (error.code === '42P01' || error.code === 'PGRST205') {
-        return [] as MaintenanceRecord[];
+    try {
+      const { data, error } = await supabase
+        .from('maintenance')
+        .select('*')
+        .order('due_date', { ascending: false });
+      
+      if (error) {
+        return await api.maintenance.list();
       }
-      console.error('Error fetching maintenance:', error);
-      throw error;
+      return (data && data.length > 0) ? data as MaintenanceRecord[] : await api.maintenance.list();
+    } catch (err) {
+      try {
+        return await api.maintenance.list();
+      } catch {
+        return initialMaintenance;
+      }
     }
-    return data as MaintenanceRecord[];
   },
 
   async updateMaintenanceStatus(maintenance_id: string, status: 'Paid' | 'Unpaid') {
@@ -360,27 +369,20 @@ export const societyService = {
     return data as MaintenanceRecord[];
   },
 
-  async getAmenities(society_id: string) {
-    let query = supabase.from('amenities').select('*');
-    
-    // Try with society_id filter first
-    const { data, error } = await query.eq('society_id', society_id).order('name', { ascending: true });
-    
-    if (error) {
-      // If society_id column is missing (42703) or table missing (42P01/PGRST205)
-      if (error.code === '42703' || error.message?.includes('society_id')) {
-        const { data: allData, error: allErr } = await supabase.from('amenities').select('*').order('name', { ascending: true });
-        if (allErr || !allData || allData.length === 0) return initialAmenities.filter(a => a.society_id === society_id);
-        return allData as Amenity[];
+  async getAmenities(society_id: string = 'GV2026') {
+    try {
+      const { data, error } = await supabase.from('amenities').select('*').eq('society_id', society_id).order('name', { ascending: true });
+      if (error) {
+        return await api.amenities.list(society_id);
       }
-      if (error.code === '42P01' || error.code === 'PGRST205') {
+      return (data && data.length > 0) ? data as Amenity[] : await api.amenities.list(society_id);
+    } catch (err) {
+      try {
+        return await api.amenities.list(society_id);
+      } catch {
         return initialAmenities.filter(a => a.society_id === society_id);
       }
-      console.error('Error fetching amenities:', error);
-      throw error;
     }
-    if (!data || data.length === 0) return initialAmenities.filter(a => a.society_id === society_id);
-    return data as Amenity[];
   },
 
   async updateAmenity(amenity_id: string, updates: Partial<Amenity>) {
@@ -462,20 +464,26 @@ export const societyService = {
   },
 
   async getComplaints() {
-    const { data: complaints, error } = await supabase
-      .from('complaint')
-      .select('*')
-      .order('complaint_date', { ascending: false });
-    
-    if (error) {
-      if (error.code === '42P01' || error.code === 'PGRST205') {
-        return [] as Complaint[];
+    try {
+      const { data: complaints, error } = await supabase
+        .from('complaint')
+        .select('*')
+        .order('complaint_date', { ascending: false });
+      
+      if (error) {
+        const list = await api.complaints.list();
+        return await this.attachMediaToComplaints(list || []);
       }
-      console.error('Error fetching complaints:', error);
-      throw error;
+      const list = (complaints && complaints.length > 0) ? complaints : await api.complaints.list();
+      return await this.attachMediaToComplaints(list || []);
+    } catch (err) {
+      try {
+        const list = await api.complaints.list();
+        return await this.attachMediaToComplaints(list || []);
+      } catch {
+        return initialComplaints;
+      }
     }
-    
-    return await this.attachMediaToComplaints(complaints || []);
   },
 
   async attachMediaToComplaints(complaints: any[]) {
@@ -588,19 +596,23 @@ export const societyService = {
   },
 
   async getBookings() {
-    const { data, error } = await supabase
-      .from('booking')
-      .select('*')
-      .order('booking_date', { ascending: false });
-    
-    if (error) {
-      if (error.code === '42P01' || error.code === 'PGRST205') {
-        return [] as Booking[];
+    try {
+      const { data, error } = await supabase
+        .from('booking')
+        .select('*')
+        .order('booking_date', { ascending: false });
+      
+      if (error) {
+        return await api.bookings.list();
       }
-      console.error('Error fetching bookings:', error);
-      return [] as Booking[];
+      return (data && data.length > 0) ? data as Booking[] : await api.bookings.list();
+    } catch (err) {
+      try {
+        return await api.bookings.list();
+      } catch {
+        return initialBookings;
+      }
     }
-    return data as Booking[];
   },
 
   async getResidentBookings(resident_id: string, society_id?: string) {

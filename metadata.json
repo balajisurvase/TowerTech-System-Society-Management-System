@@ -1,5 +1,8 @@
 {
   "name": "TowerTech-Society final project 001",
-  "description": "A comprehensive society management system with admin and resident dashboards for tracking maintenance, complaints, and notices.",
-  "requestFramePermissions": []
+  "description": "Enterprise-grade smart society management system with Python FastAPI backend, PostgreSQL/Supabase data storage, AI financial analytics, and comprehensive resident/admin modules.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
 }
